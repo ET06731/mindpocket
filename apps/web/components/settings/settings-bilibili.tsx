@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useT } from "@/lib/i18n"
+import { BilibiliSyncDialog } from "@/components/settings/bilibili-sync-dialog"
 
 export function SettingsBilibili() {
   const t = useT()
@@ -18,6 +19,7 @@ export function SettingsBilibili() {
   const [buvid3, setBuvid3] = useState("")
   const [saving, setSaving] = useState(false)
   const [testing, setTesting] = useState(false)
+  const [showSyncDialog, setShowSyncDialog] = useState(false)
 
   useEffect(() => {
     fetchStatus()
@@ -146,6 +148,9 @@ export function SettingsBilibili() {
               <span className="text-sm">已配置 Bilibili 凭证</span>
             </div>
             <div className="flex gap-2">
+              <Button onClick={() => setShowSyncDialog(true)} size="sm" variant="secondary">
+                同步收藏夹
+              </Button>
               <Button onClick={() => setShowForm(true)} size="sm" variant="outline">
                 更新
               </Button>
@@ -243,6 +248,8 @@ export function SettingsBilibili() {
           有过期时间，如果字幕提取失败，请尝试更新凭证。
         </p>
       </section>
+
+      <BilibiliSyncDialog open={showSyncDialog} onOpenChange={setShowSyncDialog} />
     </div>
   )
 }
