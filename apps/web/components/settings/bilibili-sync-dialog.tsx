@@ -65,9 +65,36 @@ export function BilibiliSyncDialog({ open, onOpenChange }: BilibiliSyncDialogPro
     if (syncing) return
     setSyncing(true)
     setProgress({ total: folder.media_count, current: 0 })
-    setStatusText("正在获取视频列表...")
+    setStatusText("正在检查文件夹...")
 
     try {
+      // 1. 获取现有文件夹并创建关联文件夹
+      const foldersRes = await fetch("/api/folders")
+      const foldersData = await foldersRes.json()
+      let targetFolderId = ""
+
+      if (foldersRes.ok && foldersData.folders) {
+        const existingFolder = foldersData.folders.find((f: any) => f.name === folder.title)
+        if (existingFolder) {
+          targetFolderId = existingFolder.id
+        }
+      }
+
+      if (!targetFolderId) {
+        setStatusText("正在创建对应的文件夹...")
+        const createRes = await fetch("/api/folders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: folder.title, emoji: "📺" }),
+        })
+        const createData = await createRes.json()
+        if (createRes.ok && createData.folder) {
+          targetFolderId = createData.folder.id
+        }
+      }
+
+      setStatusText("正在获取视频列表...")
+
       let page = 1
       let hasMore = true
       const videos: { bvid: string; title: string }[] = []
@@ -86,7 +113,7 @@ export function BilibiliSyncDialog({ open, onOpenChange }: BilibiliSyncDialogPro
           }
         }
 
-        hasMore = data.hasMore ?? (medias.length === 20)
+        hasMore = data.hasMore ?? medias.length === 20
         page += 1
       }
 
@@ -98,22 +125,27 @@ export function BilibiliSyncDialog({ open, onOpenChange }: BilibiliSyncDialogPro
       setStatusText("正在导入到书签库...")
 
       const queue = [...videos]
-      
+
       const worker = async () => {
         while (queue.length > 0) {
           const video = queue.shift()
           if (!video || !video.bvid) continue
 
           const url = `https://www.bilibili.com/video/${video.bvid}`
+          const bodyPayload: any = {
+            url,
+            title: video.title,
+            clientSource: "bilibili_sync",
+          }
+          if (targetFolderId) {
+            bodyPayload.folderId = targetFolderId
+          }
+
           try {
             await fetch("/api/ingest", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                url,
-                title: video.title,
-                clientSource: "bilibili_sync",
-              }),
+              body: JSON.stringify(bodyPayload),
             })
           } catch (e) {
             console.error("Sync failed for", video.bvid)
@@ -161,7 +193,9 @@ export function BilibiliSyncDialog({ open, onOpenChange }: BilibiliSyncDialogPro
                   {progress.current} / {progress.total}
                 </span>
               </div>
-              <Progress value={progress.total > 0 ? (progress.current / progress.total) * 100 : 0} />
+              <Progress
+                value={progress.total > 0 ? (progress.current / progress.total) * 100 : 0}
+              />
             </div>
           ) : loading ? (
             <div className="flex h-32 items-center justify-center">
@@ -170,7 +204,9 @@ export function BilibiliSyncDialog({ open, onOpenChange }: BilibiliSyncDialogPro
           ) : (
             <ScrollArea className="h-[250px] rounded-md border p-2">
               {folders.length === 0 ? (
-                <div className="p-4 text-center text-sm text-muted-foreground">没有找到收藏夹 (如果你刚配置凭证，可能缓存了请稍后再试)</div>
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  没有找到收藏夹 (如果你刚配置凭证，可能缓存了请稍后再试)
+                </div>
               ) : (
                 <div className="space-y-2">
                   {folders.map((folder) => (
@@ -182,7 +218,12 @@ export function BilibiliSyncDialog({ open, onOpenChange }: BilibiliSyncDialogPro
                         <p className="line-clamp-1 font-medium text-sm">{folder.title}</p>
                         <p className="text-muted-foreground text-xs">{folder.media_count} 个内容</p>
                       </div>
-                      <Button onClick={() => handleSync(folder)} size="sm" variant="secondary" className="shrink-0 ml-2">
+                      <Button
+                        onClick={() => handleSync(folder)}
+                        size="sm"
+                        variant="secondary"
+                        className="shrink-0 ml-2"
+                      >
                         <Play className="mr-1 size-3" />
                         同步
                       </Button>

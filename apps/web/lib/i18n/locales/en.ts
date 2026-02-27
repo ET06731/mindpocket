@@ -124,6 +124,7 @@ export const en: TranslationDict = {
     tabUrl: "URL",
     tabFile: "File Upload",
     tabBatch: "Batch Import",
+    tabPlatform: "Platform Sync",
     urlPlaceholder: "Enter a URL...",
     urlSubmit: "Import",
     fileDragHint: "Drag & drop a file here, or click to select",

@@ -3,6 +3,9 @@ export default defineBackground(() => {
     if (message.type === "SAVE_PAGE") {
       handleSavePage().then(sendResponse)
       return true
+    } else if (message.type === "BATCH_SAVE_PAGES") {
+      handleBatchSavePages(message.bookmarks).then(sendResponse)
+      return true
     }
   })
 })
@@ -46,6 +49,47 @@ async function handleSavePage() {
     return { success: true, data: result.data }
   } catch (err) {
     await notify("保存失败", String(err))
+    return { success: false, error: String(err) }
+  }
+}
+
+async function handleBatchSavePages(bookmarks: { url: string; title: string; html: string }[]) {
+  try {
+    if (!bookmarks || bookmarks.length === 0) {
+      return { success: false, error: "No bookmarks to save" }
+    }
+
+    const { saveBookmark } = await import("../lib/auth-client")
+    let successCount = 0
+
+    // Concurrency limit to avoid overwhelming the server
+    const CONCURRENCY = 3
+    const queue = [...bookmarks]
+    const worker = async () => {
+      while (queue.length > 0) {
+        const item = queue.shift()
+        if (!item) continue
+
+        try {
+          const res = await saveBookmark({
+            url: item.url,
+            title: item.title,
+            html: item.html,
+          })
+          if (res.ok) successCount++
+        } catch (e) {
+          console.error("Failed to save", item.url, e)
+        }
+      }
+    }
+
+    const workers = Array(CONCURRENCY).fill(null).map(worker)
+    await Promise.all(workers)
+
+    await notify("批量收藏完成", `成功导入 ${successCount} 个推文`)
+    return { success: true, count: successCount }
+  } catch (err) {
+    await notify("批量保存失败", String(err))
     return { success: false, error: String(err) }
   }
 }

@@ -122,6 +122,7 @@ export const zh = {
     tabUrl: "链接导入",
     tabFile: "文件上传",
     tabBatch: "批量导入",
+    tabPlatform: "平台同步",
     urlPlaceholder: "输入网页链接...",
     urlSubmit: "导入",
     fileDragHint: "拖拽文件到此处，或点击选择文件",

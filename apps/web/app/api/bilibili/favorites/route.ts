@@ -33,14 +33,20 @@ export async function GET() {
     const uid = navData.data.mid
 
     // 2. 获取创建的收藏夹
-    const favRes = await fetch(`https://api.bilibili.com/x/v3/fav/folder/created/list-all?up_mid=${uid}`, { headers })
+    const favRes = await fetch(
+      `https://api.bilibili.com/x/v3/fav/folder/created/list-all?up_mid=${uid}`,
+      { headers }
+    )
     const favData = await favRes.json()
     if (favData.code !== 0) {
-      return NextResponse.json({ error: favData.message || "Failed to fetch folders" }, { status: 400 })
+      return NextResponse.json(
+        { error: favData.message || "Failed to fetch folders" },
+        { status: 400 }
+      )
     }
 
     return NextResponse.json({
-      folders: favData.data?.list || []
+      folders: favData.data?.list || [],
     })
   } catch (error) {
     console.error("[bilibili favorites]", error)

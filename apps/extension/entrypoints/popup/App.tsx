@@ -190,6 +190,40 @@ function SavePage({
     }
   }
 
+  const handleTwitterBatchSave = async () => {
+    setStatus("loading")
+    setMessage("提取推文中...")
+
+    try {
+      const [tab] = await browser.tabs.query({ active: true, currentWindow: true })
+      if (!tab?.id) throw new Error("No active tab")
+
+      const response = await browser.tabs.sendMessage(tab.id, { type: "EXTRACT_TWITTER_BOOKMARKS" })
+      if (!response?.bookmarks || response.bookmarks.length === 0) {
+        throw new Error("没找到推文，请向下滑动加载后重试")
+      }
+
+      setMessage(`提取到 ${response.bookmarks.length} 条推文，正在导入...`)
+
+      const saveRes = await browser.runtime.sendMessage({
+        type: "BATCH_SAVE_PAGES",
+        bookmarks: response.bookmarks,
+      })
+
+      if (saveRes?.success) {
+        setStatus("success")
+        setMessage(`批量导入成功: ${saveRes.count} 条记录`)
+      } else {
+        throw new Error(saveRes?.error || "导入失败")
+      }
+    } catch (err: any) {
+      setStatus("error")
+      setMessage(err.message || String(err))
+    }
+  }
+
+  const isTwitterBookmarks = pageInfo?.url?.match(/^https?:\/\/(x|twitter)\.com\/i\/bookmarks/i)
+
   return (
     <div className="app">
       <div className="header">
@@ -247,14 +281,27 @@ function SavePage({
           <p className="page-title">{pageInfo.title}</p>
         </div>
       )}
-      <button
-        className="btn btn-save"
-        disabled={status === "loading"}
-        onClick={handleSave}
-        type="button"
-      >
-        {status === "loading" ? "保存中..." : "收藏此页面"}
-      </button>
+
+      {isTwitterBookmarks ? (
+        <button
+          className="btn btn-save"
+          style={{ backgroundColor: "#1d9bf0" }}
+          disabled={status === "loading"}
+          onClick={handleTwitterBatchSave}
+          type="button"
+        >
+          {status === "loading" ? "处理中..." : "批量提取推特收藏"}
+        </button>
+      ) : (
+        <button
+          className="btn btn-save"
+          disabled={status === "loading"}
+          onClick={handleSave}
+          type="button"
+        >
+          {status === "loading" ? "保存中..." : "收藏此页面"}
+        </button>
+      )}
       {status === "success" && <p className="success">{message}</p>}
       {status === "error" && <p className="error">{message}</p>}
     </div>

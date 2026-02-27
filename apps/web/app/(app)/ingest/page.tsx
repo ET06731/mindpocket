@@ -8,13 +8,15 @@ import {
   Globe,
   List,
   Loader2,
+  RefreshCw,
   Upload,
 } from "lucide-react"
 import Link from "next/link"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 
-import { hasPlatformIcon, PlatformIcon } from "@/components/icons/platform-icons"
+import { BilibiliIcon, hasPlatformIcon, PlatformIcon } from "@/components/icons/platform-icons"
+import { BilibiliSyncDialog } from "@/components/settings/bilibili-sync-dialog"
 import { Badge } from "@/components/ui/badge"
 import {
   Breadcrumb,
@@ -209,6 +211,10 @@ function IngestForm({
             <List className="size-4" />
             {t.ingest.tabBatch}
           </TabsTrigger>
+          <TabsTrigger value="platform">
+            <RefreshCw className="size-4" />
+            {t.ingest.tabPlatform}
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="url">
           <UrlIngestForm folders={folders} onSuccess={onSuccess} t={t} />
@@ -219,7 +225,32 @@ function IngestForm({
         <TabsContent value="batch">
           <BatchIngestForm folders={folders} onSuccess={onSuccess} t={t} />
         </TabsContent>
+        <TabsContent value="platform">
+          <PlatformSyncForm t={t} />
+        </TabsContent>
       </Tabs>
+    </div>
+  )
+}
+
+function PlatformSyncForm({ t }: { t: ReturnType<typeof useT> }) {
+  const [biliOpen, setBiliOpen] = useState(false)
+
+  return (
+    <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div
+        className="flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-colors hover:bg-muted"
+        onClick={() => setBiliOpen(true)}
+      >
+        <div className="flex size-10 items-center justify-center rounded-md bg-sky-50 text-sky-500 dark:bg-sky-950">
+          <BilibiliIcon className="size-6" />
+        </div>
+        <div className="flex-1">
+          <h3 className="font-medium text-sm">Bilibili 收藏夹</h3>
+          <p className="text-muted-foreground text-xs">自动解析并批量导入已收藏的视频</p>
+        </div>
+      </div>
+      <BilibiliSyncDialog onOpenChange={setBiliOpen} open={biliOpen} />
     </div>
   )
 }
