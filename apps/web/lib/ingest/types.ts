@@ -15,7 +15,13 @@ export type BookmarkType = (typeof BOOKMARK_TYPES)[number]
 export const SOURCE_TYPES = ["url", "file", "extension"] as const
 export type SourceType = (typeof SOURCE_TYPES)[number]
 
-export const CLIENT_SOURCES = ["web", "mobile", "extension"] as const
+export const CLIENT_SOURCES = [
+  "web",
+  "mobile",
+  "extension",
+  "bilibili_sync",
+  "twitter_sync",
+] as const
 export type ClientSource = (typeof CLIENT_SOURCES)[number]
 
 export const INGEST_STATUSES = ["pending", "processing", "completed", "failed"] as const

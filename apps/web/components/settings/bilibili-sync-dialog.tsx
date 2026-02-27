@@ -170,7 +170,7 @@ export function BilibiliSyncDialog({ open, onOpenChange }: BilibiliSyncDialogPro
       setStatusText("同步异常")
     } finally {
       refreshFolders(true)
-      refreshBookmarks(true)
+      refreshBookmarks(0, true)
       setSyncing(false)
       setTimeout(() => {
         if (open) {

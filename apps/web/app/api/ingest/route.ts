@@ -2,7 +2,7 @@ import { headers } from "next/headers"
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { ingestFromExtension, ingestFromFile, ingestFromUrl } from "@/lib/ingest/pipeline"
-import { ingestExtensionSchema, ingestUrlSchema } from "@/lib/ingest/types"
+import { CLIENT_SOURCES, ingestExtensionSchema, ingestUrlSchema } from "@/lib/ingest/types"
 
 // 目前不支持 pdf 解析
 const ALLOWED_EXTENSIONS = [
@@ -108,7 +108,7 @@ async function handleFileUpload(request: Request, userId: string) {
     return NextResponse.json({ error: "No file provided" }, { status: 400 })
   }
 
-  if (!(clientSource && ["web", "mobile", "extension"].includes(clientSource))) {
+  if (!(clientSource && CLIENT_SOURCES.includes(clientSource as any))) {
     return NextResponse.json({ error: "Invalid or missing clientSource" }, { status: 400 })
   }
 
