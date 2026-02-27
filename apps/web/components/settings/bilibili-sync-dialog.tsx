@@ -4,6 +4,7 @@ import { Play, RefreshCw } from "lucide-react"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { useBookmarkStore, useFolderStore } from "@/stores"
 import {
   Dialog,
   DialogContent,
@@ -31,6 +32,9 @@ export function BilibiliSyncDialog({ open, onOpenChange }: BilibiliSyncDialogPro
   const [syncing, setSyncing] = useState(false)
   const [progress, setProgress] = useState({ total: 0, current: 0 })
   const [statusText, setStatusText] = useState("")
+
+  const { fetchFolders: refreshFolders } = useFolderStore()
+  const { fetchBookmarks: refreshBookmarks } = useBookmarkStore()
 
   useEffect(() => {
     if (open) {
@@ -165,6 +169,8 @@ export function BilibiliSyncDialog({ open, onOpenChange }: BilibiliSyncDialogPro
       toast.error(err.message || "同步异常")
       setStatusText("同步异常")
     } finally {
+      refreshFolders(true)
+      refreshBookmarks(true)
       setSyncing(false)
       setTimeout(() => {
         if (open) {
